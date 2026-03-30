@@ -5,7 +5,7 @@
 [![JSDocs][jsdocs-src]][jsdocs-href]
 [![License][license-src]][license-href]
 
-`semver-es` is an ESM-first TypeScript refactor of [`node-semver`](https://github.com/npm/node-semver). It is designed to keep the upstream root API shape as consistent as possible, so existing semver usage can move to ESM imports with minimal changes.
+`semver-es` is an ESM-first TypeScript refactor of [`node-semver`](https://github.com/npm/node-semver). It is designed to keep the upstream root API shape as consistent as possible, so existing semver usage can move to ESM imports with minimal changes. It is developed on top of the upstream `node-semver` implementation, which is licensed under ISC.
 
 ```sh
 pnpm add semver-es
@@ -64,6 +64,8 @@ export default defineConfig({
 ## License
 
 [MIT](./LICENSE) License © [jinghaihan](https://github.com/jinghaihan)
+
+Based on [`node-semver`](https://github.com/npm/node-semver), licensed under ISC.
 
 <!-- Badges -->
 
