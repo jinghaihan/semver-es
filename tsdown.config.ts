@@ -8,5 +8,6 @@ export default defineConfig({
   dts: true,
   exports: {
     all: true,
+    exclude: ['internal/**'],
   },
 })
