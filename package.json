@@ -1,9 +1,9 @@
 {
   "name": "semver-es",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.0-alpha.0",
   "packageManager": "pnpm@10.33.0",
-  "description": "The semantic version parser used by npm (ESM).",
+  "description": "Modern ESM-first TypeScript rewrite of npm's semver.",
   "author": "jinghaihan",
   "license": "MIT",
   "homepage": "https://github.com/jinghaihan/semver-es#readme",
