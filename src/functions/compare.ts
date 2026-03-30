@@ -1,6 +1,16 @@
 import type { CompareResult, OptionsOrLoose, SemVerLike } from '../types'
 import { SemVer } from '../classes/semver'
 
-export function compare(a: SemVerLike, b: SemVerLike, loose?: OptionsOrLoose): CompareResult {
-  return new SemVer(a, loose).compare(new SemVer(b, loose))
+/**
+ * Compares two versions excluding build identifiers (the bit after `+` in the semantic version string).
+ *
+ * Sorts in ascending order when passed to `Array.sort()`.
+ *
+ * @return
+ * - `0` if `v1` == `v2`
+ * - `1` if `v1` is greater
+ * - `-1` if `v2` is greater.
+ */
+export function compare(v1: SemVerLike, v2: SemVerLike, optionsOrLoose?: OptionsOrLoose): CompareResult {
+  return new SemVer(v1, optionsOrLoose).compare(new SemVer(v2, optionsOrLoose))
 }

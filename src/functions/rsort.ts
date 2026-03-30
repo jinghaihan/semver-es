@@ -1,6 +1,9 @@
 import type { OptionsOrLoose, SemVerLike } from '../types'
 import { compareBuild } from './compare-build'
 
-export function rsort<T extends SemVerLike>(list: T[], loose?: OptionsOrLoose): T[] {
-  return list.sort((a, b) => compareBuild(b, a, loose))
+/**
+ * Sorts an array of semver entries in descending order using `compareBuild()`.
+ */
+export function rsort<T extends SemVerLike>(list: T[], optionsOrLoose?: OptionsOrLoose): T[] {
+  return list.sort((v1, v2) => compareBuild(v2, v1, optionsOrLoose))
 }

@@ -1,6 +1,6 @@
 export class LRUCache<K = unknown, V = unknown> {
-  max: number
-  map: Map<K, V>
+  private max: number
+  private map: Map<K, V>
 
   constructor() {
     this.max = 1000
@@ -12,6 +12,7 @@ export class LRUCache<K = unknown, V = unknown> {
     if (value === undefined) {
       return undefined
     }
+
     else {
       // Remove the key from the map and add it to the end
       this.map.delete(key)
@@ -31,9 +32,8 @@ export class LRUCache<K = unknown, V = unknown> {
       // If cache is full, delete the least recently used item
       if (this.map.size >= this.max) {
         const firstKey = this.map.keys().next().value
-        if (firstKey !== undefined) {
+        if (firstKey !== undefined)
           this.delete(firstKey)
-        }
       }
 
       this.map.set(key, value)

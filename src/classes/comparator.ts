@@ -1,4 +1,10 @@
-import type { ComparatorInput, OptionsOrLoose, ParsedOptions } from '../types'
+import type {
+  ComparatorLike,
+  ComparatorOperator,
+  OptionsOrLoose,
+  ParsedOptions,
+  SemVerLike,
+} from '../types'
 import { cmp } from '../functions/cmp'
 import { debug } from '../internal/debug'
 import { parseOptions } from '../internal/parse-options'
@@ -10,26 +16,24 @@ const ANY = Symbol('SemVer ANY')
 const SPACE_CHARACTERS = /\s+/
 // hoisted class for cyclic dependency
 export class Comparator {
-  options: ParsedOptions = {}
-  loose = false
-  operator = ''
-  semver: SemVer | typeof ANY = ANY
-  value = ''
+  public options: ParsedOptions = {}
+  public loose: boolean = false
+  public operator: ComparatorOperator = ''
+  public semver: SemVer | typeof ANY = ANY
+  public value: string = ''
 
   static get ANY() {
     return ANY
   }
 
-  constructor(comp: ComparatorInput, options?: OptionsOrLoose) {
+  constructor(comp: ComparatorLike, options?: OptionsOrLoose) {
     const parsedOptions = parseOptions(options)
 
     if (comp instanceof Comparator) {
-      if (comp.loose === !!parsedOptions.loose) {
+      if (comp.loose === !!parsedOptions.loose)
         return comp
-      }
-      else {
+      else
         comp = comp.value
-      }
     }
 
     const normalizedComp = String(comp).trim().split(SPACE_CHARACTERS).join(' ')
@@ -38,48 +42,44 @@ export class Comparator {
     this.loose = !!parsedOptions.loose
     this.parse(normalizedComp)
 
-    if (this.semver === ANY) {
+    if (this.semver === ANY)
       this.value = ''
-    }
-    else {
+
+    else
       this.value = this.operator + this.semver.version
-    }
 
     debug('comp', this)
   }
 
-  parse(comp: string) {
+  parse(comp: string): void {
     const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR]
     const m = comp.match(r)
 
-    if (!m) {
+    if (!m)
       throw new TypeError(`Invalid comparator: ${comp}`)
-    }
 
-    this.operator = m[1] !== undefined ? m[1] : ''
-    if (this.operator === '=') {
+    this.operator = (m[1] !== undefined ? m[1] : '') as ComparatorOperator
+    if (this.operator === '=')
       this.operator = ''
-    }
 
     // if it literally is just '>' or '' then allow anything.
-    if (!m[2]) {
+    if (!m[2])
       this.semver = ANY
-    }
-    else {
+
+    else
       this.semver = new SemVer(m[2], this.options.loose)
-    }
   }
 
-  toString() {
+  toString(): string {
     return this.value
   }
 
-  test(version: unknown): boolean {
+  test(version: SemVerLike): boolean
+  test(version: SemVerLike | typeof ANY): boolean {
     debug('Comparator.test', version, this.options.loose)
 
-    if (this.semver === ANY || version === ANY) {
+    if (this.semver === ANY || version === ANY)
       return true
-    }
 
     if (typeof version === 'string') {
       try {
@@ -93,44 +93,45 @@ export class Comparator {
     return cmp(version, this.operator, this.semver, this.options)
   }
 
-  intersects(comp?: unknown, options?: OptionsOrLoose): boolean {
-    if (!(comp instanceof Comparator)) {
+  intersects(comp: Comparator, optionsOrLoose?: OptionsOrLoose): boolean
+  intersects(comp?: Comparator, optionsOrLoose?: OptionsOrLoose): boolean {
+    if (!(comp instanceof Comparator))
       throw new TypeError('a Comparator is required')
-    }
 
     if (this.operator === '') {
-      if (this.value === '') {
+      if (this.value === '')
         return true
-      }
-      return new Range(comp.value, options).test(this.value)
+
+      return new Range(comp.value, optionsOrLoose).test(this.value)
     }
     else if (comp.operator === '') {
-      if (comp.value === '') {
+      if (comp.value === '')
         return true
-      }
-      return new Range(this.value, options).test(comp.semver)
+
+      return new Range(this.value, optionsOrLoose).test(comp.semver as SemVerLike)
     }
 
-    const parsedOptions = parseOptions(options)
+    const parsedOptions = parseOptions(optionsOrLoose)
 
     // Special cases where nothing can possibly be lower
     if (parsedOptions.includePrerelease
       && (this.value === '<0.0.0-0' || comp.value === '<0.0.0-0')) {
       return false
     }
+
     if (!parsedOptions.includePrerelease
       && (this.value.startsWith('<0.0.0') || comp.value.startsWith('<0.0.0'))) {
       return false
     }
 
     // Same direction increasing (> or >=)
-    if (this.operator.startsWith('>') && comp.operator.startsWith('>')) {
+    if (this.operator.startsWith('>') && comp.operator.startsWith('>'))
       return true
-    }
+
     // Same direction decreasing (< or <=)
-    if (this.operator.startsWith('<') && comp.operator.startsWith('<')) {
+    if (this.operator.startsWith('<') && comp.operator.startsWith('<'))
       return true
-    }
+
     // same SemVer and both sides are inclusive (<= or >=)
     if (
       this.semver !== ANY && comp.semver !== ANY
@@ -139,16 +140,19 @@ export class Comparator {
     ) {
       return true
     }
+
     // opposite directions less than
-    if (cmp(this.semver, '<', comp.semver, parsedOptions)
+    if (cmp(this.semver as SemVerLike, '<', comp.semver as SemVerLike, parsedOptions)
       && this.operator.startsWith('>') && comp.operator.startsWith('<')) {
       return true
     }
+
     // opposite directions greater than
-    if (cmp(this.semver, '>', comp.semver, parsedOptions)
+    if (cmp(this.semver as SemVerLike, '>', comp.semver as SemVerLike, parsedOptions)
       && this.operator.startsWith('<') && comp.operator.startsWith('>')) {
       return true
     }
+
     return false
   }
 }

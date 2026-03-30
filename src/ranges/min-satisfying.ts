@@ -2,16 +2,19 @@ import type { RangeLike, RangeOptionsOrLoose, SemVerLike } from '../types'
 import { Range } from '../classes/range'
 import { SemVer } from '../classes/semver'
 
+/**
+ * Return the lowest version in the list that satisfies the range, or null if none of them do.
+ */
 export function minSatisfying<T extends SemVerLike>(
   versions: readonly T[],
   range: RangeLike,
-  options?: RangeOptionsOrLoose,
+  optionsOrLoose?: RangeOptionsOrLoose,
 ): T | null {
   let min: T | null = null
   let minSV: SemVer | null = null
   let rangeObj: Range
   try {
-    rangeObj = new Range(range, options)
+    rangeObj = new Range(range, optionsOrLoose)
   }
   catch {
     return null
@@ -22,7 +25,7 @@ export function minSatisfying<T extends SemVerLike>(
       if (!min || !minSV || minSV.compare(v) === 1) {
         // compare(min, v, true)
         min = v
-        minSV = new SemVer(min, options)
+        minSV = new SemVer(min, optionsOrLoose)
       }
     }
   })

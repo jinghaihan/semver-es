@@ -1,9 +1,11 @@
 import type {
   ComparatorSet,
+  OptionsOrLoose,
   ParsedOptions,
-  RangeInput,
+  RangeLike,
   RangeOptionsOrLoose,
   RangeSet,
+  SemVerLike,
 } from '../types'
 import { FLAG_INCLUDE_PRERELEASE, FLAG_LOOSE } from '../internal/constants'
 import { debug } from '../internal/debug'
@@ -28,15 +30,16 @@ const hasSemVer = (value: Comparator['semver']): value is SemVer => value !== Co
 
 // hoisted class for cyclic dependency
 export class Range {
-  raw = ''
-  loose = false
-  options: ParsedOptions = {}
-  includePrerelease = false
-  set: RangeSet = []
-  formatted: string | undefined
+  public raw: string = ''
+  public loose: boolean = false
+  public options: ParsedOptions = {}
+  public includePrerelease: boolean = false
+  public set: RangeSet = []
+  public formatted: string | undefined
 
-  constructor(range?: RangeInput, options?: RangeOptionsOrLoose) {
-    const parsedOptions = parseOptions(options)
+  constructor(range: RangeLike, optionsOrLoose?: RangeOptionsOrLoose)
+  constructor(range?: RangeLike | Comparator, optionsOrLoose?: RangeOptionsOrLoose) {
+    const parsedOptions = parseOptions(optionsOrLoose)
 
     if (range instanceof Range) {
       if (
@@ -49,7 +52,6 @@ export class Range {
         return new Range(range.raw, parsedOptions)
       }
     }
-
     if (range instanceof Comparator) {
       // just put it in the set and return
       this.raw = range.value
@@ -78,9 +80,8 @@ export class Range {
       // in loose mode, but will still throw if the WHOLE range is invalid.
       .filter(c => c.length > 0)
 
-    if (!this.set.length) {
+    if (!this.set.length)
       throw new TypeError(`Invalid SemVer Range: ${this.raw}`)
-    }
 
     // if we have any that are not the null set, throw out null sets.
     if (this.set.length > 1) {
@@ -90,6 +91,7 @@ export class Range {
       if (this.set.length === 0) {
         this.set = [first]
       }
+
       else if (this.set.length > 1) {
         // if we have any that are *, then the range is just *
         for (const c of this.set) {
@@ -108,14 +110,14 @@ export class Range {
     if (this.formatted === undefined) {
       this.formatted = ''
       for (let i = 0; i < this.set.length; i++) {
-        if (i > 0) {
+        if (i > 0)
           this.formatted += '||'
-        }
+
         const comps = this.set[i]
         for (let k = 0; k < comps.length; k++) {
-          if (k > 0) {
+          if (k > 0)
             this.formatted += ' '
-          }
+
           this.formatted += comps[k].toString().trim()
         }
       }
@@ -131,6 +133,10 @@ export class Range {
     return this.range
   }
 
+  inspect(): string {
+    return `<SemVer Range "${this.range}">`
+  }
+
   parseRange(range: string): ComparatorSet {
     // memoize range parsing for performance.
     // this is a very hot path, and fully deterministic.
@@ -139,9 +145,8 @@ export class Range {
         | (this.options.loose ? FLAG_LOOSE : 0)
     const memoKey = `${memoOpts}:${range}`
     const cached = cache.get(memoKey)
-    if (cached) {
+    if (cached)
       return cached
-    }
 
     const loose = this.options.loose
     // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
@@ -179,6 +184,7 @@ export class Range {
         return !!comp.match(re[t.COMPARATORLOOSE])
       })
     }
+
     debug('range list', rangeList)
 
     // if any comparators are the null set, then replace with JUST null set
@@ -187,34 +193,33 @@ export class Range {
     const rangeMap = new Map<string, Comparator>()
     const comparators = rangeList.map(comp => new Comparator(comp, this.options))
     for (const comp of comparators) {
-      if (isNullSet(comp)) {
+      if (isNullSet(comp))
         return [comp]
-      }
+
       rangeMap.set(comp.value, comp)
     }
-    if (rangeMap.size > 1 && rangeMap.has('')) {
+    if (rangeMap.size > 1 && rangeMap.has(''))
       rangeMap.delete('')
-    }
 
     const result = [...rangeMap.values()]
     cache.set(memoKey, result)
     return result
   }
 
-  intersects(range?: RangeInput, options?: RangeOptionsOrLoose): boolean {
-    if (!(range instanceof Range)) {
+  intersects(range: Range, optionsOrLoose?: OptionsOrLoose): boolean
+  intersects(range?: RangeLike, optionsOrLoose?: OptionsOrLoose): boolean {
+    if (!(range instanceof Range))
       throw new TypeError('a Range is required')
-    }
 
     return this.set.some((thisComparators) => {
       return (
-        isSatisfiable(thisComparators, options)
+        isSatisfiable(thisComparators, optionsOrLoose)
         && range.set.some((rangeComparators) => {
           return (
-            isSatisfiable(rangeComparators, options)
+            isSatisfiable(rangeComparators, optionsOrLoose)
             && thisComparators.every((thisComparator) => {
               return rangeComparators.every((rangeComparator) => {
-                return thisComparator.intersects(rangeComparator, options)
+                return thisComparator.intersects(rangeComparator, optionsOrLoose)
               })
             })
           )
@@ -224,10 +229,9 @@ export class Range {
   }
 
   // if ANY of the sets match ALL of its comparators, then pass
-  test(version: unknown): boolean {
-    if (!version) {
+  test(version: SemVerLike): boolean {
+    if (!version)
       return false
-    }
 
     let semverVersion: SemVer
     if (typeof version === 'string') {
@@ -238,17 +242,18 @@ export class Range {
         return false
       }
     }
+
     else if (version instanceof SemVer) {
       semverVersion = version
     }
+
     else {
       return false
     }
 
     for (let i = 0; i < this.set.length; i++) {
-      if (testSet(this.set[i], semverVersion, this.options)) {
+      if (testSet(this.set[i], semverVersion, this.options))
         return true
-      }
     }
     return false
   }
@@ -256,16 +261,16 @@ export class Range {
 
 // take a set of comparators and determine whether there
 // exists a version which can satisfy it
-function isSatisfiable(comparators: ComparatorSet, options?: RangeOptionsOrLoose): boolean {
+function isSatisfiable(comparators: ComparatorSet, options?: OptionsOrLoose): boolean {
   let result = true
   const remainingComparators = comparators.slice()
   let testComparator = remainingComparators.pop()
 
   while (result && remainingComparators.length) {
     const currentComparator = testComparator
-    if (!currentComparator) {
+    if (!currentComparator)
       break
-    }
+
     result = remainingComparators.every((otherComparator) => {
       return currentComparator.intersects(otherComparator, options)
     })
@@ -293,8 +298,8 @@ function parseComparator(comp: string, options: ParsedOptions): string {
   return comp
 }
 
-function isX(id: unknown): boolean {
-  return !id || (typeof id === 'string' && (id.toLowerCase() === 'x' || id === '*'))
+function isX(id?: string): boolean {
+  return !id || id.toLowerCase() === 'x' || id === '*'
 }
 
 // ~, ~> --> * (any, kinda silly)
@@ -326,13 +331,16 @@ function replaceTilde(comp: string, options: ParsedOptions): string {
       if (isX(M)) {
         ret = ''
       }
+
       else if (isX(m)) {
         ret = `>=${major}.0.0 <${Number(major) + 1}.0.0-0`
       }
+
       else if (isX(p)) {
         // ~1.2 == >=1.2.0 <1.3.0-0
         ret = `>=${major}.${minor}.0 <${major}.${Number(minor) + 1}.0-0`
       }
+
       else if (pr) {
         debug('replaceTilde pr', pr)
         ret = `>=${major}.${minor}.${patch}-${pr
@@ -382,9 +390,11 @@ function replaceCaret(comp: string, options: ParsedOptions): string {
       if (isX(M)) {
         ret = ''
       }
+
       else if (isX(m)) {
         ret = `>=${major}.0.0${z} <${Number(major) + 1}.0.0-0`
       }
+
       else if (isX(p)) {
         if (major === '0') {
           ret = `>=${major}.${minor}.0${z} <${major}.${Number(minor) + 1}.0-0`
@@ -460,9 +470,8 @@ function replaceXRange(comp: string, options: ParsedOptions): string {
       let patch: string | number = String(p)
       let prerelease = pr ?? ''
 
-      if (operator === '=' && anyX) {
+      if (operator === '=' && anyX)
         operator = ''
-      }
 
       // if we're including prereleases in the match, then we need
       // to fix this to -0, the lowest possible prerelease value
@@ -481,9 +490,9 @@ function replaceXRange(comp: string, options: ParsedOptions): string {
       else if (operator && anyX) {
         // we know patch is an x, because we have any x at all.
         // replace X with 0
-        if (xm) {
+        if (xm)
           minor = 0
-        }
+
         patch = 0
 
         if (operator === '>') {
@@ -504,23 +513,22 @@ function replaceXRange(comp: string, options: ParsedOptions): string {
           // <=0.7.x is actually <0.8.0, since any 0.7.x should
           // pass.  Similarly, <=7.x is actually <8.0.0, etc.
           operator = '<'
-          if (xm) {
+          if (xm)
             major = Number(major) + 1
-          }
-          else {
+
+          else
             minor = Number(minor) + 1
-          }
         }
 
-        if (operator === '<') {
+        if (operator === '<')
           prerelease = '-0'
-        }
 
         ret = `${operator + major}.${minor}.${patch}${prerelease}`
       }
       else if (xm) {
         ret = `>=${major}.0.0${prerelease} <${Number(major) + 1}.0.0-0`
       }
+
       else if (xp) {
         ret = `>=${major}.${minor}.0${prerelease
         } <${major}.${Number(minor) + 1}.0-0`
@@ -574,40 +582,38 @@ function hyphenReplace(incPr: boolean) {
     let fromValue = from ?? ''
     let toValue = to ?? ''
 
-    if (isX(fM)) {
+    if (isX(fM))
       fromValue = ''
-    }
-    else if (isX(fm)) {
-      fromValue = `>=${String(fM)}.0.0${incPr ? '-0' : ''}`
-    }
-    else if (isX(fp)) {
-      fromValue = `>=${String(fM)}.${String(fm)}.0${incPr ? '-0' : ''}`
-    }
-    else if (fpr) {
-      fromValue = `>=${fromValue}`
-    }
-    else {
-      fromValue = `>=${fromValue}${incPr ? '-0' : ''}`
-    }
 
-    if (isX(tM)) {
+    else if (isX(fm))
+      fromValue = `>=${String(fM)}.0.0${incPr ? '-0' : ''}`
+
+    else if (isX(fp))
+      fromValue = `>=${String(fM)}.${String(fm)}.0${incPr ? '-0' : ''}`
+
+    else if (fpr)
+      fromValue = `>=${fromValue}`
+
+    else
+      fromValue = `>=${fromValue}${incPr ? '-0' : ''}`
+
+    if (isX(tM))
       toValue = ''
-    }
-    else if (isX(tm)) {
+
+    else if (isX(tm))
       toValue = `<${Number(tM) + 1}.0.0-0`
-    }
-    else if (isX(tp)) {
+
+    else if (isX(tp))
       toValue = `<${String(tM)}.${Number(tm) + 1}.0-0`
-    }
-    else if (tpr) {
+
+    else if (tpr)
       toValue = `<=${String(tM)}.${String(tm)}.${String(tp)}-${tpr}`
-    }
-    else if (incPr) {
+
+    else if (incPr)
       toValue = `<${String(tM)}.${String(tm)}.${Number(tp) + 1}-0`
-    }
-    else {
+
+    else
       toValue = `<=${toValue}`
-    }
 
     return `${fromValue} ${toValue}`.trim()
   }
@@ -615,9 +621,8 @@ function hyphenReplace(incPr: boolean) {
 
 function testSet(set: ComparatorSet, version: SemVer, options: ParsedOptions): boolean {
   for (let i = 0; i < set.length; i++) {
-    if (!set[i].test(version)) {
+    if (!set[i].test(version))
       return false
-    }
   }
 
   if (version.prerelease.length && !options.includePrerelease) {
@@ -629,9 +634,8 @@ function testSet(set: ComparatorSet, version: SemVer, options: ParsedOptions): b
     for (let i = 0; i < set.length; i++) {
       const comparator = set[i]
       debug(comparator.semver)
-      if (!hasSemVer(comparator.semver)) {
+      if (!hasSemVer(comparator.semver))
         continue
-      }
 
       const allowed = comparator.semver
       if (allowed.prerelease.length > 0) {

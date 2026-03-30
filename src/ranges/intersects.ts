@@ -1,8 +1,15 @@
 import type { RangeLike, RangeOptionsOrLoose } from '../types'
 import { Range } from '../classes/range'
 
-export function intersects(r1: RangeLike, r2: RangeLike, options?: RangeOptionsOrLoose): boolean {
-  const range1 = new Range(r1, options)
-  const range2 = new Range(r2, options)
-  return range1.intersects(range2, options)
+/**
+ * Return true if any of the ranges comparators intersect
+ */
+export function intersects(
+  range1: RangeLike,
+  range2: RangeLike,
+  optionsOrLoose?: RangeOptionsOrLoose,
+): boolean {
+  const firstRange = new Range(range1, optionsOrLoose)
+  const secondRange = new Range(range2, optionsOrLoose)
+  return firstRange.intersects(secondRange, optionsOrLoose)
 }

@@ -4,18 +4,19 @@ import { Range } from '../classes/range'
 import { SemVer } from '../classes/semver'
 import { gt } from '../functions/gt'
 
-export function minVersion(range: RangeLike, loose?: OptionsOrLoose): SemVer | null {
-  const rangeObj = new Range(range, loose)
+/**
+ * Return the lowest version that can possibly match the given range.
+ */
+export function minVersion(range: RangeLike, optionsOrLoose?: OptionsOrLoose): SemVer | null {
+  const rangeObj = new Range(range, optionsOrLoose)
 
   let minver: SemVer | null = new SemVer('0.0.0')
-  if (rangeObj.test(minver)) {
+  if (rangeObj.test(minver))
     return minver
-  }
 
   minver = new SemVer('0.0.0-0')
-  if (rangeObj.test(minver)) {
+  if (rangeObj.test(minver))
     return minver
-  }
 
   minver = null
   for (let i = 0; i < rangeObj.set.length; ++i) {
@@ -30,19 +31,19 @@ export function minVersion(range: RangeLike, loose?: OptionsOrLoose): SemVer | n
       const compver = new SemVer(sourceVersion)
       switch (comparator.operator) {
         case '>':
-          if (compver.prerelease.length === 0) {
+          if (compver.prerelease.length === 0)
             compver.patch++
-          }
-          else {
+
+          else
             compver.prerelease.push(0)
-          }
+
           compver.raw = compver.format()
           /* fallthrough */
         case '':
         case '>=':
-          if (!setMin || gt(compver, setMin)) {
+          if (!setMin || gt(compver, setMin))
             setMin = compver
-          }
+
           break
         case '<':
         case '<=':
@@ -53,14 +54,12 @@ export function minVersion(range: RangeLike, loose?: OptionsOrLoose): SemVer | n
           throw new Error(`Unexpected operation: ${comparator.operator}`)
       }
     })
-    if (setMin && (!minver || gt(minver, setMin))) {
+    if (setMin && (!minver || gt(minver, setMin)))
       minver = setMin
-    }
   }
 
-  if (minver && rangeObj.test(minver)) {
+  if (minver && rangeObj.test(minver))
     return minver
-  }
 
   return null
 }

@@ -1,5 +1,10 @@
 import type { SemVer } from '../classes/semver'
-import type { CompareResult, ParsedOptions, RangeLike } from '../types'
+import type {
+  CompareResult,
+  ParsedOptions,
+  RangeLike,
+  RangeOptions,
+} from '../types'
 import { Comparator } from '../classes/comparator'
 import { Range } from '../classes/range'
 import { compare } from '../functions/compare'
@@ -46,10 +51,12 @@ const hasSemVer = (value: Comparator['semver']): value is SemVer => value !== AN
 //     - If no C has a prerelease and the LT.semver tuple, return false
 // - Else return true
 
-export function subset(sub: RangeLike, dom: RangeLike, options?: unknown): boolean {
-  if (sub === dom) {
+/**
+ * Return true if the subRange range is entirely contained by the superRange range.
+ */
+export function subset(sub: RangeLike, dom: RangeLike, options?: RangeOptions): boolean {
+  if (sub === dom)
     return true
-  }
 
   const parsedOptions = parseOptions(options)
   const subRange = new Range(sub, options)
@@ -66,16 +73,15 @@ export function subset(sub: RangeLike, dom: RangeLike, options?: unknown): boole
         break
       }
     }
-    if (isSimpleSubset) {
+    if (isSimpleSubset)
       continue
-    }
+
     // the null set is a subset of everything, but null simple ranges in
     // a complex range should be ignored.  so if we saw a non-null range,
     // then we know this isn't a subset, but if EVERY simple range was null,
     // then it is a subset.
-    if (sawNonNull) {
+    if (sawNonNull)
       return false
-    }
   }
   return true
 }
@@ -86,12 +92,11 @@ const minimumVersion = [new Comparator('>=0.0.0')]
 function simpleSubset(
   sub: ComparatorList,
   dom: ComparatorList,
-  options: unknown,
+  options: RangeOptions | undefined,
   parsedOptions: ParsedOptions,
 ): boolean | null {
-  if (sub === dom) {
+  if (sub === dom)
     return true
-  }
 
   let subSet = sub
   let domSet = dom
@@ -107,63 +112,53 @@ function simpleSubset(
       subSet = minimumVersion
     }
   }
-
   if (domSet.length === 1 && domSet[0].semver === ANY) {
-    if (parsedOptions.includePrerelease) {
+    if (parsedOptions.includePrerelease)
       return true
-    }
-    else {
+    else
       domSet = minimumVersion
-    }
   }
-
   const eqSet = new Set<SemVer>()
   let gt: Comparator | undefined
   let lt: Comparator | undefined
   for (const c of subSet) {
-    if (c.operator === '>' || c.operator === '>=') {
+    if (c.operator === '>' || c.operator === '>=')
       gt = higherGT(gt, c, options)
-    }
-    else if (c.operator === '<' || c.operator === '<=') {
+
+    else if (c.operator === '<' || c.operator === '<=')
       lt = lowerLT(lt, c, options)
-    }
-    else if (hasSemVer(c.semver)) {
+
+    else if (hasSemVer(c.semver))
       eqSet.add(c.semver)
-    }
   }
 
-  if (eqSet.size > 1) {
+  if (eqSet.size > 1)
     return null
-  }
 
   let gtltComp: CompareResult | undefined
   if (gt && lt) {
-    if (!hasSemVer(gt.semver) || !hasSemVer(lt.semver)) {
+    if (!hasSemVer(gt.semver) || !hasSemVer(lt.semver))
       return null
-    }
+
     gtltComp = compare(gt.semver, lt.semver, options)
-    if (gtltComp > 0) {
+    if (gtltComp > 0)
       return null
-    }
-    else if (gtltComp === 0 && (gt.operator !== '>=' || lt.operator !== '<=')) {
+
+    else if (gtltComp === 0 && (gt.operator !== '>=' || lt.operator !== '<='))
       return null
-    }
   }
 
   const eq = eqSet.values().next().value
   if (eq) {
-    if (gt && !satisfies(eq, String(gt), options)) {
+    if (gt && !satisfies(eq, String(gt), options))
       return null
-    }
 
-    if (lt && !satisfies(eq, String(lt), options)) {
+    if (lt && !satisfies(eq, String(lt), options))
       return null
-    }
 
     for (const c of domSet) {
-      if (!satisfies(eq, String(c), options)) {
+      if (!satisfies(eq, String(c), options))
         return false
-      }
     }
 
     return true
@@ -212,9 +207,8 @@ function simpleSubset(
       }
       if (c.operator === '>' || c.operator === '>=') {
         higher = higherGT(gt, c, options)
-        if (higher === c && higher !== gt) {
+        if (higher === c && higher !== gt)
           return false
-        }
       }
       else if (gt.operator === '>=' && hasSemVer(gt.semver) && !satisfies(gt.semver, String(c), options)) {
         return false
@@ -231,51 +225,46 @@ function simpleSubset(
       }
       if (c.operator === '<' || c.operator === '<=') {
         lower = lowerLT(lt, c, options)
-        if (lower === c && lower !== lt) {
+        if (lower === c && lower !== lt)
           return false
-        }
       }
       else if (lt.operator === '<=' && hasSemVer(lt.semver) && !satisfies(lt.semver, String(c), options)) {
         return false
       }
     }
-    if (!c.operator && (lt || gt) && gtltComp !== 0) {
+    if (!c.operator && (lt || gt) && gtltComp !== 0)
       return false
-    }
   }
 
   // if there was a < or >, and nothing in the dom, then must be false
   // UNLESS it was limited by another range in the other direction.
   // Eg, >1.0.0 <1.0.1 is still a subset of <2.0.0
-  if (gt && hasDomLT && !lt && gtltComp !== 0) {
+  if (gt && hasDomLT && !lt && gtltComp !== 0)
     return false
-  }
 
-  if (lt && hasDomGT && !gt && gtltComp !== 0) {
+  if (lt && hasDomGT && !gt && gtltComp !== 0)
     return false
-  }
 
   // we needed a prerelease range in a specific tuple, but didn't get one
   // then this isn't a subset.  eg >=1.2.3-pre is not a subset of >=1.0.0,
   // because it includes prereleases in the 1.2.3 tuple
-  if (needDomGTPre || needDomLTPre) {
+  if (needDomGTPre || needDomLTPre)
     return false
-  }
 
   return true
 }
 
 // >=1.2.3 is lower than >1.2.3
-function higherGT(a: Comparator | undefined, b: Comparator, options: unknown): Comparator {
-  if (!a) {
+function higherGT(a: Comparator | undefined, b: Comparator, options: RangeOptions | undefined): Comparator {
+  if (!a)
     return b
-  }
-  if (!hasSemVer(a.semver)) {
+
+  if (!hasSemVer(a.semver))
     return b
-  }
-  if (!hasSemVer(b.semver)) {
+
+  if (!hasSemVer(b.semver))
     return a
-  }
+
   const comp = compare(a.semver, b.semver, options)
   return comp > 0
     ? a
@@ -287,16 +276,16 @@ function higherGT(a: Comparator | undefined, b: Comparator, options: unknown): C
 }
 
 // <=1.2.3 is higher than <1.2.3
-function lowerLT(a: Comparator | undefined, b: Comparator, options: unknown): Comparator {
-  if (!a) {
+function lowerLT(a: Comparator | undefined, b: Comparator, options: RangeOptions | undefined): Comparator {
+  if (!a)
     return b
-  }
-  if (!hasSemVer(a.semver)) {
+
+  if (!hasSemVer(a.semver))
     return b
-  }
-  if (!hasSemVer(b.semver)) {
+
+  if (!hasSemVer(b.semver))
     return a
-  }
+
   const comp = compare(a.semver, b.semver, options)
   return comp < 0
     ? a

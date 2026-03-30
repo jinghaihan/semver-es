@@ -1,4 +1,10 @@
-import type { OptionsOrLoose, RangeLike, RangeOptionsOrLoose, SemVerLike } from '../types'
+import type {
+  Hilo,
+  OptionsOrLoose,
+  RangeLike,
+  RangeOptionsOrLoose,
+  SemVerLike,
+} from '../types'
 import { Comparator } from '../classes/comparator'
 import { Range } from '../classes/range'
 import { SemVer } from '../classes/semver'
@@ -12,14 +18,18 @@ const { ANY } = Comparator
 
 type CompareFn = (a: SemVerLike, b: SemVerLike, options?: OptionsOrLoose) => boolean
 
+/**
+ * Return true if the version is outside the bounds of the range in either the high or low direction.
+ * The hilo argument must be either the string '>' or '<'. (This is the function called by gtr and ltr.)
+ */
 export function outside(
   version: SemVerLike,
   range: RangeLike,
-  hilo: string,
-  options?: RangeOptionsOrLoose,
+  hilo: Hilo,
+  optionsOrLoose?: RangeOptionsOrLoose,
 ): boolean {
-  const versionObj = new SemVer(version, options)
-  const rangeObj = new Range(range, options)
+  const versionObj = new SemVer(version, optionsOrLoose)
+  const rangeObj = new Range(range, optionsOrLoose)
 
   let gtfn: CompareFn
   let ltefn: CompareFn
@@ -46,9 +56,8 @@ export function outside(
   }
 
   // If it satisfies the range it is not outside
-  if (satisfies(versionObj, rangeObj, options)) {
+  if (satisfies(versionObj, rangeObj, optionsOrLoose))
     return false
-  }
 
   // From now on, variable terms are as if we're in "gtr" mode.
   // but note that everything is flipped for the "ltr" function.
@@ -61,36 +70,34 @@ export function outside(
 
     for (const comparator of comparators) {
       let current = comparator
-      if (current.semver === ANY) {
+      if (current.semver === ANY)
         current = new Comparator('>=0.0.0')
-      }
+
       high = high || current
       low = low || current
-      if (gtfn(current.semver, high.semver, options)) {
+      if (gtfn(current.semver as SemVerLike, high.semver as SemVerLike, optionsOrLoose))
         high = current
-      }
-      else if (ltfn(current.semver, low.semver, options)) {
+
+      else if (ltfn(current.semver as SemVerLike, low.semver as SemVerLike, optionsOrLoose))
         low = current
-      }
     }
 
-    if (!high || !low) {
+    if (!high || !low)
       continue
-    }
 
     // If the edge version comparator has a operator then our version
     // isn't outside it
-    if (high.operator === comp || high.operator === ecomp) {
+    if (high.operator === comp || high.operator === ecomp)
       return false
-    }
 
     // If the lowest version comparator has an operator and our version
     // is less than it then it isn't higher than the range
     if ((!low.operator || low.operator === comp)
-      && ltefn(versionObj, low.semver)) {
+      && ltefn(versionObj, low.semver as SemVerLike)) {
       return false
     }
-    else if (low.operator === ecomp && ltfn(versionObj, low.semver)) {
+
+    else if (low.operator === ecomp && ltfn(versionObj, low.semver as SemVerLike)) {
       return false
     }
   }

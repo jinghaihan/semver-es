@@ -1,4 +1,11 @@
-import type { CompareResult, ParsedOptions } from '../types'
+import type {
+  CompareResult,
+  IdentifierBase,
+  ParsedOptions,
+  RangeOptionsOrLoose,
+  ReleaseType,
+  SemVerLike,
+} from '../types'
 import { MAX_LENGTH, MAX_SAFE_INTEGER } from '../internal/constants'
 import { debug } from '../internal/debug'
 import { compareIdentifiers } from '../internal/identifiers'
@@ -8,19 +15,19 @@ import { safeRe as re, t } from '../internal/re'
 const NUMERIC_IDENTIFIER = /^\d+$/
 
 export class SemVer {
-  raw = ''
-  loose = false
-  options: ParsedOptions = {}
-  includePrerelease = false
-  major = 0
-  minor = 0
-  patch = 0
-  version = ''
-  build: Array<string | number> = []
-  prerelease: Array<string | number> = []
+  public raw: string = ''
+  public loose: boolean = false
+  public options: ParsedOptions = {}
+  public includePrerelease: boolean = false
+  public major: number = 0
+  public minor: number = 0
+  public patch: number = 0
+  public version: string = ''
+  public build: string[] = []
+  public prerelease: Array<string | number> = []
 
-  constructor(version: unknown, options?: unknown) {
-    const parsedOptions = parseOptions(options)
+  constructor(version: SemVerLike, optionsOrLoose?: RangeOptionsOrLoose) {
+    const parsedOptions = parseOptions(optionsOrLoose)
     let versionString: string
 
     if (version instanceof SemVer) {
@@ -28,11 +35,13 @@ export class SemVer {
         && version.includePrerelease === !!parsedOptions.includePrerelease) {
         return version
       }
+
       versionString = version.version
     }
     else if (typeof version === 'string') {
       versionString = version
     }
+
     else {
       throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`)
     }
@@ -52,9 +61,8 @@ export class SemVer {
 
     const m = versionString.trim().match(parsedOptions.loose ? re[t.LOOSE] : re[t.FULL])
 
-    if (!m) {
+    if (!m)
       throw new TypeError(`Invalid Version: ${versionString}`)
-    }
 
     this.raw = versionString
 
@@ -63,22 +71,20 @@ export class SemVer {
     this.minor = +m[2]
     this.patch = +m[3]
 
-    if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
+    if (this.major > MAX_SAFE_INTEGER || this.major < 0)
       throw new TypeError('Invalid major version')
-    }
 
-    if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
+    if (this.minor > MAX_SAFE_INTEGER || this.minor < 0)
       throw new TypeError('Invalid minor version')
-    }
 
-    if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
+    if (this.patch > MAX_SAFE_INTEGER || this.patch < 0)
       throw new TypeError('Invalid patch version')
-    }
 
     // numberify any prerelease numeric ids
     if (!m[4]) {
       this.prerelease = []
     }
+
     else {
       this.prerelease = m[4].split('.').map((id: string) => {
         if (NUMERIC_IDENTIFIER.test(id)) {
@@ -90,16 +96,15 @@ export class SemVer {
         return id
       })
     }
-
     this.build = m[5] ? m[5].split('.') : []
     this.format()
   }
 
   format(): string {
     this.version = `${this.major}.${this.minor}.${this.patch}`
-    if (this.prerelease.length) {
+    if (this.prerelease.length)
       this.version += `-${this.prerelease.join('.')}`
-    }
+
     return this.version
   }
 
@@ -107,94 +112,128 @@ export class SemVer {
     return this.version
   }
 
-  private asSemVer(other: unknown): SemVer {
+  inspect(): string {
+    return `<SemVer "${this.version}">`
+  }
+
+  private asSemVer(other: SemVerLike): SemVer {
     return other instanceof SemVer ? other : new SemVer(other, this.options)
   }
 
-  compare(other: unknown): CompareResult {
+  /**
+   * Compares two versions excluding build identifiers (the bit after `+` in the semantic version string).
+   *
+   * @return
+   * - `0` if `this` == `other`
+   * - `1` if `this` is greater
+   * - `-1` if `other` is greater.
+   */
+  compare(other: SemVerLike): CompareResult {
     debug('SemVer.compare', this.version, this.options, other)
     let otherVersion: SemVer
     if (other instanceof SemVer) {
       otherVersion = other
     }
+
     else {
-      if (typeof other === 'string' && other === this.version) {
+      if (typeof other === 'string' && other === this.version)
         return 0
-      }
+
       otherVersion = this.asSemVer(other)
     }
 
-    if (otherVersion.version === this.version) {
+    if (otherVersion.version === this.version)
       return 0
-    }
 
     return this.compareMain(otherVersion) || this.comparePre(otherVersion)
   }
 
-  compareMain(other: unknown): CompareResult {
+  /**
+   * Compares the release portion of two versions.
+   *
+   * @return
+   * - `0` if `this` == `other`
+   * - `1` if `this` is greater
+   * - `-1` if `other` is greater.
+   */
+  compareMain(other: SemVerLike): CompareResult {
     const otherVersion = this.asSemVer(other)
 
-    if (this.major < otherVersion.major) {
+    if (this.major < otherVersion.major)
       return -1
-    }
-    if (this.major > otherVersion.major) {
+
+    if (this.major > otherVersion.major)
       return 1
-    }
-    if (this.minor < otherVersion.minor) {
+
+    if (this.minor < otherVersion.minor)
       return -1
-    }
-    if (this.minor > otherVersion.minor) {
+
+    if (this.minor > otherVersion.minor)
       return 1
-    }
-    if (this.patch < otherVersion.patch) {
+
+    if (this.patch < otherVersion.patch)
       return -1
-    }
-    if (this.patch > otherVersion.patch) {
+
+    if (this.patch > otherVersion.patch)
       return 1
-    }
+
     return 0
   }
 
-  comparePre(other: unknown): CompareResult {
+  /**
+   * Compares the prerelease portion of two versions.
+   *
+   * @return
+   * - `0` if `this` == `other`
+   * - `1` if `this` is greater
+   * - `-1` if `other` is greater.
+   */
+  comparePre(other: SemVerLike): CompareResult {
     const otherVersion = this.asSemVer(other)
 
     // NOT having a prerelease is > having one
-    if (this.prerelease.length && !otherVersion.prerelease.length) {
+    if (this.prerelease.length && !otherVersion.prerelease.length)
       return -1
-    }
-    else if (!this.prerelease.length && otherVersion.prerelease.length) {
+
+    else if (!this.prerelease.length && otherVersion.prerelease.length)
       return 1
-    }
-    else if (!this.prerelease.length && !otherVersion.prerelease.length) {
+
+    else if (!this.prerelease.length && !otherVersion.prerelease.length)
       return 0
-    }
 
     let i = 0
     do {
       const a = this.prerelease[i]
       const b = otherVersion.prerelease[i]
       debug('prerelease compare', i, a, b)
-      if (a === undefined && b === undefined) {
+      if (a === undefined && b === undefined)
         return 0
-      }
-      else if (b === undefined) {
+
+      else if (b === undefined)
         return 1
-      }
-      else if (a === undefined) {
+
+      else if (a === undefined)
         return -1
-      }
-      else if (a === b) {
+
+      else if (a === b)
         continue
-      }
-      else {
+
+      else
         return compareIdentifiers(a, b)
-      }
     } while (++i)
 
     return 0
   }
 
-  compareBuild(other: unknown): CompareResult {
+  /**
+   * Compares the build identifier of two versions.
+   *
+   * @return
+   * - `0` if `this` == `other`
+   * - `1` if `this` is greater
+   * - `-1` if `other` is greater.
+   */
+  compareBuild(other: SemVerLike): CompareResult {
     const otherVersion = this.asSemVer(other)
 
     let i = 0
@@ -202,21 +241,20 @@ export class SemVer {
       const a = this.build[i]
       const b = otherVersion.build[i]
       debug('build compare', i, a, b)
-      if (a === undefined && b === undefined) {
+      if (a === undefined && b === undefined)
         return 0
-      }
-      else if (b === undefined) {
+
+      else if (b === undefined)
         return 1
-      }
-      else if (a === undefined) {
+
+      else if (a === undefined)
         return -1
-      }
-      else if (a === b) {
+
+      else if (a === b)
         continue
-      }
-      else {
+
+      else
         return compareIdentifiers(a, b)
-      }
     } while (++i)
 
     return 0
@@ -224,20 +262,20 @@ export class SemVer {
 
   // preminor will bump the version up to the next minor release, and immediately
   // down to pre-release. premajor and prepatch work the same way.
-  inc(release: unknown, identifier?: unknown, identifierBase?: unknown): SemVer {
-    const releaseType = String(release)
-    const identifierString = typeof identifier === 'string' ? identifier : undefined
+  inc(release: ReleaseType, identifier?: string, identifierBase?: IdentifierBase): SemVer
+  inc(release: ReleaseType | 'pre', identifier?: string, identifierBase?: IdentifierBase): SemVer {
+    const releaseType = release
+    const identifierString = identifier
 
     if (releaseType.startsWith('pre')) {
-      if (!identifierString && identifierBase === false) {
+      if (!identifierString && identifierBase === false)
         throw new Error('invalid increment argument: identifier is empty')
-      }
+
       // Avoid an invalid semver results
       if (identifierString) {
         const match = `-${identifierString}`.match(this.options.loose ? re[t.PRERELEASELOOSE] : re[t.PRERELEASE])
-        if (!match || match[1] !== identifierString) {
+        if (!match || match[1] !== identifierString)
           throw new Error(`invalid identifier: ${identifierString}`)
-        }
       }
     }
 
@@ -247,13 +285,13 @@ export class SemVer {
         this.patch = 0
         this.minor = 0
         this.major++
-        this.inc('pre', identifierString, identifierBase)
+        this.inc('pre' as ReleaseType, identifierString, identifierBase)
         break
       case 'preminor':
         this.prerelease.length = 0
         this.patch = 0
         this.minor++
-        this.inc('pre', identifierString, identifierBase)
+        this.inc('pre' as ReleaseType, identifierString, identifierBase)
         break
       case 'prepatch':
         // If this is already a prerelease, it will bump to the next version
@@ -261,20 +299,20 @@ export class SemVer {
         // relevant at this point.
         this.prerelease.length = 0
         this.inc('patch', identifierString, identifierBase)
-        this.inc('pre', identifierString, identifierBase)
+        this.inc('pre' as ReleaseType, identifierString, identifierBase)
         break
       // If the input is a non-prerelease version, this acts the same as
       // prepatch.
       case 'prerelease':
-        if (this.prerelease.length === 0) {
+        if (this.prerelease.length === 0)
           this.inc('patch', identifierString, identifierBase)
-        }
-        this.inc('pre', identifierString, identifierBase)
+
+        this.inc('pre' as ReleaseType, identifierString, identifierBase)
         break
       case 'release':
-        if (this.prerelease.length === 0) {
+        if (this.prerelease.length === 0)
           throw new Error(`version ${this.raw} is not a prerelease`)
-        }
+
         this.prerelease.length = 0
         break
 
@@ -290,6 +328,7 @@ export class SemVer {
         ) {
           this.major++
         }
+
         this.minor = 0
         this.patch = 0
         this.prerelease = []
@@ -299,9 +338,9 @@ export class SemVer {
         // Otherwise increment minor.
         // 1.2.0-5 bumps to 1.2.0
         // 1.2.1 bumps to 1.3.0
-        if (this.patch !== 0 || this.prerelease.length === 0) {
+        if (this.patch !== 0 || this.prerelease.length === 0)
           this.minor++
-        }
+
         this.patch = 0
         this.prerelease = []
         break
@@ -310,9 +349,9 @@ export class SemVer {
         // If it is a pre-release it will bump up to the same patch version.
         // 1.2.0-5 patches to 1.2.0
         // 1.2.0 patches to 1.2.1
-        if (this.prerelease.length === 0) {
+        if (this.prerelease.length === 0)
           this.patch++
-        }
+
         this.prerelease = []
         break
       // This probably shouldn't be used publicly.
@@ -323,6 +362,7 @@ export class SemVer {
         if (this.prerelease.length === 0) {
           this.prerelease = [base]
         }
+
         else {
           let i = this.prerelease.length
           while (--i >= 0) {
@@ -333,9 +373,9 @@ export class SemVer {
           }
           if (i === -1) {
             // didn't increment anything
-            if (identifierString === this.prerelease.join('.') && identifierBase === false) {
+            if (identifierString === this.prerelease.join('.') && identifierBase === false)
               throw new Error('invalid increment argument: identifier already exists')
-            }
+
             this.prerelease.push(base)
           }
         }
@@ -343,13 +383,12 @@ export class SemVer {
           // 1.2.0-beta.1 bumps to 1.2.0-beta.2,
           // 1.2.0-beta.fooblz or 1.2.0-beta bumps to 1.2.0-beta.0
           let prerelease: Array<string | number> = [identifierString, base]
-          if (identifierBase === false) {
+          if (identifierBase === false)
             prerelease = [identifierString]
-          }
+
           if (compareIdentifiers(this.prerelease[0], identifierString) === 0) {
-            if (Number.isNaN(Number(this.prerelease[1]))) {
+            if (Number.isNaN(Number(this.prerelease[1])))
               this.prerelease = prerelease
-            }
           }
           else {
             this.prerelease = prerelease
@@ -361,9 +400,9 @@ export class SemVer {
         throw new Error(`invalid increment argument: ${releaseType}`)
     }
     this.raw = this.format()
-    if (this.build.length) {
+    if (this.build.length)
       this.raw += `+${this.build.join('.')}`
-    }
+
     return this
   }
 }

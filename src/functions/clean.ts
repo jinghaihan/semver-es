@@ -3,10 +3,10 @@ import { parse } from './parse'
 
 const CLEAN_REPLACE_PREFIX = /^[=v]+/
 
-export function clean(version: unknown, options?: OptionsOrLoose): string | null {
-  if (typeof version !== 'string') {
-    return null
-  }
-  const s = parse(version.trim().replace(CLEAN_REPLACE_PREFIX, ''), options)
+/**
+ * Returns cleaned (removed leading/trailing whitespace, remove '=v' prefix) and parsed version, or null if version is invalid.
+ */
+export function clean(version: string, optionsOrLoose?: OptionsOrLoose): string | null {
+  const s = parse(version.trim().replace(CLEAN_REPLACE_PREFIX, ''), optionsOrLoose)
   return s ? s.version : null
 }

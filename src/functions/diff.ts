@@ -1,18 +1,20 @@
 import type { ReleaseType, SemVerLike } from '../types'
 import { parse } from './parse'
 
-export function diff(version1: SemVerLike, version2: SemVerLike): ReleaseType | null {
-  const v1 = parse(version1, undefined, true)
-  const v2 = parse(version2, undefined, true)
-  const comparison = v1.compare(v2)
+/**
+ * Returns difference between two versions by the release type (major, premajor, minor, preminor, patch, prepatch, or prerelease), or null if the versions are the same.
+ */
+export function diff(v1: SemVerLike, v2: SemVerLike): ReleaseType | null {
+  const version1 = parse(v1, undefined, true)
+  const version2 = parse(v2, undefined, true)
+  const comparison = version1.compare(version2)
 
-  if (comparison === 0) {
+  if (comparison === 0)
     return null
-  }
 
   const v1Higher = comparison > 0
-  const highVersion = v1Higher ? v1 : v2
-  const lowVersion = v1Higher ? v2 : v1
+  const highVersion = v1Higher ? version1 : version2
+  const lowVersion = v1Higher ? version2 : version1
   const highHasPre = !!highVersion.prerelease.length
   const lowHasPre = !!lowVersion.prerelease.length
 
@@ -24,15 +26,14 @@ export function diff(version1: SemVerLike, version2: SemVerLike): ReleaseType | 
     // 1.0.0-1 -> 1.0.0
     // 1.0.0-1 -> 1.1.1
     // 1.0.0-1 -> 2.0.0
-    if (!lowVersion.patch && !lowVersion.minor) {
+    if (!lowVersion.patch && !lowVersion.minor)
       return 'major'
-    }
 
     // If the main part has no difference
     if (lowVersion.compareMain(highVersion) === 0) {
-      if (lowVersion.minor && !lowVersion.patch) {
+      if (lowVersion.minor && !lowVersion.patch)
         return 'minor'
-      }
+
       return 'patch'
     }
   }
@@ -40,17 +41,14 @@ export function diff(version1: SemVerLike, version2: SemVerLike): ReleaseType | 
   // add the `pre` prefix if we are going to a prerelease version
   const prefix = highHasPre ? 'pre' : ''
 
-  if (v1.major !== v2.major) {
+  if (version1.major !== version2.major)
     return `${prefix}major`
-  }
 
-  if (v1.minor !== v2.minor) {
+  if (version1.minor !== version2.minor)
     return `${prefix}minor`
-  }
 
-  if (v1.patch !== v2.patch) {
+  if (version1.patch !== version2.patch)
     return `${prefix}patch`
-  }
 
   // high and low are prereleases
   return 'prerelease'

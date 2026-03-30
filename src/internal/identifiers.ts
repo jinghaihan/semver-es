@@ -1,8 +1,15 @@
+import type { CompareResult } from '../types'
+
 const numeric = /^\d+$/
-export function compareIdentifiers(a: string | number, b: string | number) {
-  if (typeof a === 'number' && typeof b === 'number') {
+
+/**
+ * Compares two identifiers, must be numeric strings or truthy/falsy values.
+ *
+ * Sorts in ascending order when passed to `Array.sort()`.
+ */
+export function compareIdentifiers(a: string | number, b: string | number): CompareResult {
+  if (typeof a === 'number' && typeof b === 'number')
     return a === b ? 0 : a < b ? -1 : 1
-  }
 
   const anum = numeric.test(String(a))
   const bnum = numeric.test(String(b))
@@ -23,4 +30,9 @@ export function compareIdentifiers(a: string | number, b: string | number) {
               : 1
 }
 
-export const rcompareIdentifiers = (a: string | number, b: string | number) => compareIdentifiers(b, a)
+/**
+ * The reverse of compareIdentifiers.
+ *
+ * Sorts in descending order when passed to `Array.sort()`.
+ */
+export const rcompareIdentifiers = (a: string | number, b: string | number): CompareResult => compareIdentifiers(b, a)

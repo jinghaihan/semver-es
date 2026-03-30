@@ -5,26 +5,26 @@ type Awaitable<T> = T | Promise<T>
 type TestCallback = (t: Tap) => Awaitable<void>
 
 export interface Tap {
-  cleanSnapshot: (value: any) => any
-  end: (...args: any[]) => void
-  plan: (...args: any[]) => void
-  test: (name: any, fn?: TestCallback) => void
-  equal: (actual: any, expected?: any, message?: any) => void
-  strictEqual: (actual: any, expected?: any, message?: any) => void
-  not: (actual: any, expected?: any, message?: any) => void
-  ok: (value: any, ...messages: any[]) => void
-  notOk: (value: any, ...messages: any[]) => void
-  same: (actual: any, expected?: any, message?: any) => void
-  strictSame: (actual: any, expected?: any, message?: any) => void
-  match: (actual: any, expected?: any, message?: any) => void
-  notMatch: (actual: any, expected?: any, message?: any) => void
-  throws: (fn: () => unknown, expected?: any, message?: any) => void
-  doesNotThrow: (fn: () => unknown, message?: any) => void
-  resolveMatchSnapshot: (promise: Promise<any>, hint?: string) => Promise<any>
-  matchSnapshot: (value: any, hint?: string) => void
+  cleanSnapshot: (value: unknown) => unknown
+  end: (...args: unknown[]) => void
+  plan: (...args: unknown[]) => void
+  test: (name: unknown, fn?: TestCallback) => void
+  equal: (actual: unknown, expected?: unknown, message?: unknown) => void
+  strictEqual: (actual: unknown, expected?: unknown, message?: unknown) => void
+  not: (actual: unknown, expected?: unknown, message?: unknown) => void
+  ok: (value: unknown, ...messages: unknown[]) => void
+  notOk: (value: unknown, ...messages: unknown[]) => void
+  same: (actual: unknown, expected?: unknown, message?: unknown) => void
+  strictSame: (actual: unknown, expected?: unknown, message?: unknown) => void
+  match: (actual: unknown, expected?: unknown, message?: unknown) => void
+  notMatch: (actual: unknown, expected?: unknown, message?: unknown) => void
+  throws: (fn: () => unknown, expected?: unknown, message?: unknown) => void
+  doesNotThrow: (fn: () => unknown, message?: unknown) => void
+  resolveMatchSnapshot: <T>(promise: Promise<T>, hint?: string) => Promise<T>
+  matchSnapshot: (value: unknown, hint?: string) => void
 }
 
-function applyCleanSnapshot(value: any, cleaner: (value: any) => any): any {
+function applyCleanSnapshot(value: unknown, cleaner: (value: unknown) => unknown): unknown {
   if (typeof value === 'string') {
     return cleaner(value)
   }
@@ -34,8 +34,8 @@ function applyCleanSnapshot(value: any, cleaner: (value: any) => any): any {
   }
 
   if (value && typeof value === 'object') {
-    const out: Record<string, any> = {}
-    for (const [k, v] of Object.entries(value)) {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       out[k] = applyCleanSnapshot(v, cleaner)
     }
     return out
@@ -44,7 +44,7 @@ function applyCleanSnapshot(value: any, cleaner: (value: any) => any): any {
   return value
 }
 
-function matchValue(actual: any, expected: any): void {
+function matchValue(actual: unknown, expected: unknown): void {
   if (expected === Number) {
     expect(typeof actual).toBe('number')
     return
@@ -81,12 +81,16 @@ function matchValue(actual: any, expected: any): void {
   }
 
   if (typeof expected === 'object' && expected !== null) {
-    for (const [key, value] of Object.entries(expected)) {
+    const actualRecord
+      = actual && typeof actual === 'object'
+        ? actual as Record<string, unknown>
+        : undefined
+    for (const [key, value] of Object.entries(expected as Record<string, unknown>)) {
       if (value === undefined) {
-        expect(actual?.[key]).toBeUndefined()
+        expect(actualRecord?.[key]).toBeUndefined()
         continue
       }
-      matchValue(actual?.[key], value)
+      matchValue(actualRecord?.[key], value)
     }
     return
   }
@@ -136,7 +140,7 @@ export const tap: Tap = {
       expect(actual).not.toMatch(expected)
       return
     }
-    expect(actual).not.toMatchObject(expected)
+    expect(actual).not.toMatchObject(expected as Record<string, unknown>)
   },
   throws: (fn, expected) => {
     if (expected && typeof expected === 'object' && !(expected instanceof RegExp) && !(expected instanceof Error)) {
@@ -169,7 +173,7 @@ export const tap: Tap = {
     expect(fn).toThrow()
   },
   doesNotThrow: fn => expect(fn).not.toThrow(),
-  resolveMatchSnapshot: async (promise, hint) => {
+  resolveMatchSnapshot: async <T>(promise: Promise<T>, hint?: string): Promise<T> => {
     const value = await promise
     const cleaned = applyCleanSnapshot(value, tap.cleanSnapshot)
     expect(cleaned).toMatchSnapshot(hint)

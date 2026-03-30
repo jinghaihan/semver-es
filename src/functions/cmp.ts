@@ -1,4 +1,5 @@
-import type { OptionsOrLoose, SemVerLike } from '../types'
+import type { Operator, OptionsOrLoose, SemVerLike } from '../types'
+import { SemVer } from '../classes/semver'
 import { eq } from './eq'
 import { gt } from './gt'
 import { gte } from './gte'
@@ -6,44 +7,51 @@ import { lt } from './lt'
 import { lte } from './lte'
 import { neq } from './neq'
 
-export function cmp(a: SemVerLike, op: string, b: SemVerLike, loose?: OptionsOrLoose): boolean {
-  const asComparable = (value: unknown): unknown =>
-    typeof value === 'object' && value !== null && 'version' in value
-      ? (value as { version: unknown }).version
-      : value
+/**
+ * Pass in a comparison string, and it'll call the corresponding semver comparison function.
+ * "===" and "!==" do simple string comparison, but are included for completeness.
+ * Throws if an invalid comparison string is provided.
+ */
+export function cmp(
+  v1: SemVerLike,
+  operator: Operator,
+  v2: SemVerLike,
+  optionsOrLoose?: OptionsOrLoose,
+): boolean {
+  const asComparable = (value: SemVerLike): string => value instanceof SemVer ? value.version : value
 
-  switch (op) {
+  switch (operator) {
     case '===':
-      a = asComparable(a)
-      b = asComparable(b)
-      return a === b
+      v1 = asComparable(v1)
+      v2 = asComparable(v2)
+      return v1 === v2
 
     case '!==':
-      a = asComparable(a)
-      b = asComparable(b)
-      return a !== b
+      v1 = asComparable(v1)
+      v2 = asComparable(v2)
+      return v1 !== v2
 
     case '':
     case '=':
     case '==':
-      return eq(a, b, loose)
+      return eq(v1, v2, optionsOrLoose)
 
     case '!=':
-      return neq(a, b, loose)
+      return neq(v1, v2, optionsOrLoose)
 
     case '>':
-      return gt(a, b, loose)
+      return gt(v1, v2, optionsOrLoose)
 
     case '>=':
-      return gte(a, b, loose)
+      return gte(v1, v2, optionsOrLoose)
 
     case '<':
-      return lt(a, b, loose)
+      return lt(v1, v2, optionsOrLoose)
 
     case '<=':
-      return lte(a, b, loose)
+      return lte(v1, v2, optionsOrLoose)
 
     default:
-      throw new TypeError(`Invalid operator: ${op}`)
+      throw new TypeError(`Invalid operator: ${operator}`)
   }
 }
