@@ -1,0 +1,22 @@
+import { compareIdentifiers, rcompareIdentifiers } from '../../src/internal/identifiers'
+import { test } from '../tap'
+
+test('rcompareIdentifiers and compareIdentifiers', (t) => {
+  const set = [
+    ['1', '2'],
+    ['alpha', 'beta'],
+    ['0', 'beta'],
+    [1, 2],
+  ]
+  set.forEach((ab) => {
+    const a = ab[0]
+    const b = ab[1]
+    t.equal(compareIdentifiers(a, b), -1)
+    t.equal(rcompareIdentifiers(a, b), 1)
+  })
+  t.equal(compareIdentifiers('0', '0'), 0)
+  t.equal(rcompareIdentifiers('0', '0'), 0)
+  t.equal(compareIdentifiers(1, 1), 0)
+  t.equal(rcompareIdentifiers(1, 1), 0)
+  t.end()
+})

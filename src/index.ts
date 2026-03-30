@@ -1,1 +1,51 @@
-export {}
+export { Comparator } from './classes/comparator'
+export { Range } from './classes/range'
+export { SemVer } from './classes/semver'
+export { clean } from './functions/clean'
+export { cmp } from './functions/cmp'
+export { coerce } from './functions/coerce'
+export { compare } from './functions/compare'
+export { compareBuild } from './functions/compare-build'
+export { compareLoose } from './functions/compare-loose'
+export { diff } from './functions/diff'
+export { eq } from './functions/eq'
+export { gt } from './functions/gt'
+export { gte } from './functions/gte'
+export { inc } from './functions/inc'
+export { lt } from './functions/lt'
+export { lte } from './functions/lte'
+export { major } from './functions/major'
+export { minor } from './functions/minor'
+export { neq } from './functions/neq'
+export { parse } from './functions/parse'
+export { patch } from './functions/patch'
+export { prerelease } from './functions/prerelease'
+export { rcompare } from './functions/rcompare'
+export { rsort } from './functions/rsort'
+export { satisfies } from './functions/satisfies'
+export { sort } from './functions/sort'
+export { valid } from './functions/valid'
+
+export { RELEASE_TYPES, SEMVER_SPEC_VERSION } from './internal/constants'
+export { compareIdentifiers, rcompareIdentifiers } from './internal/identifiers'
+export { re, src, t as tokens } from './internal/re'
+
+export { gtr } from './ranges/gtr'
+export { intersects } from './ranges/intersects'
+export { ltr } from './ranges/ltr'
+export { maxSatisfying } from './ranges/max-satisfying'
+export { minSatisfying } from './ranges/min-satisfying'
+export { minVersion } from './ranges/min-version'
+export { outside } from './ranges/outside'
+export { simplifyRange } from './ranges/simplify'
+export { subset } from './ranges/subset'
+export { toComparators } from './ranges/to-comparators'
+export { validRange } from './ranges/valid'
+
+export type {
+  CoerceOptions,
+  Operator,
+  Options,
+  RangeOptions,
+  ReleaseType,
+} from './types'
