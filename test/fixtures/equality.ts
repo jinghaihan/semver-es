@@ -1,6 +1,8 @@
+import type { EqualityCase } from './types'
+
 // [version1, version2]
 // version1 should be equivalent to version2
-export const equality = [
+export const equality: EqualityCase[] = [
   ['1.2.3', 'v1.2.3', true],
   ['1.2.3', '=1.2.3', true],
   ['1.2.3', 'v 1.2.3', true],

@@ -4,7 +4,7 @@ import { test } from '../tap'
 test('diff versions test', (t) => {
 //  [version1, version2, result]
 //  diff(version1, version2) -> result
-  [
+  const cases: Array<[string, string, string | null]> = [
     ['1.2.3', '0.2.3', 'major'],
     ['0.2.3', '1.2.3', 'major'],
     ['1.4.5', '0.2.3', 'major'],
@@ -41,7 +41,8 @@ test('diff versions test', (t) => {
     ['1.4.0-1', '2.3.5', 'major'],
     ['1.6.1-5', '1.7.2', 'minor'],
     ['2.0.0-1', '2.1.1', 'major'],
-  ].forEach((v) => {
+  ]
+  cases.forEach((v) => {
     const version1 = v[0]
     const version2 = v[1]
     const wanted = v[2]

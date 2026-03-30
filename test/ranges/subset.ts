@@ -3,7 +3,7 @@ import { subset } from '../../src/ranges/subset'
 import { tap as t } from '../tap'
 
 // sub, dom, expect, [options]
-const cases = [
+const cases: Array<[string, string, boolean, { includePrerelease: boolean }?]> = [
   ['1.2.3', '1.2.3', true],
   ['1.2.3', '1.x', true],
   ['1.2.3 1.2.4', '1.2.3', true],

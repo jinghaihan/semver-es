@@ -6,6 +6,7 @@ import { test } from '../tap'
 
 test('invalid cmp usage', (t) => {
   t.throws(() => {
+    // @ts-expect-error validating runtime rejection of an invalid operator.
     cmp('1.2.3', 'a frog', '4.5.6')
   }, new TypeError('Invalid operator: a frog'))
   t.end()

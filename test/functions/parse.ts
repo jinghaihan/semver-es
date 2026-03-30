@@ -6,7 +6,12 @@ import { tap as t } from '../tap'
 t.test('returns null instead of throwing when presented with garbage', (t) => {
   t.plan(invalidVersions.length)
   invalidVersions.forEach(([v, msg, opts]) =>
-    t.equal(parse(v, opts), null, msg))
+    t.equal(
+      // @ts-expect-error invalidVersions intentionally contains non-SemVer inputs.
+      parse(v, opts),
+      null,
+      msg,
+    ))
 })
 
 t.test('throw errors if asked to', (t) => {
@@ -17,6 +22,7 @@ t.test('throw errors if asked to', (t) => {
     message: 'Invalid Version: bad',
   })
   t.throws(() => {
+    // @ts-expect-error verifying runtime throw for non-SemVer array input.
     parse([], null, true)
   }, {
     name: 'TypeError',

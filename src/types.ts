@@ -44,8 +44,8 @@ export interface CoerceOptions extends Options {
 export type Operator = '===' | '!==' | '' | '=' | '==' | '!=' | '>' | '>=' | '<' | '<='
 export type ComparatorOperator = '' | '=' | '<' | '>' | '<=' | '>='
 export type Hilo = '>' | '<'
-export type OptionsOrLoose = boolean | Options
-export type RangeOptionsOrLoose = boolean | RangeOptions
+export type OptionsOrLoose = boolean | Options | null
+export type RangeOptionsOrLoose = boolean | RangeOptions | null
 export type ParsedOptions = RangeOptions & CoerceOptions
 
 export type SemVerLike = string | SemVer

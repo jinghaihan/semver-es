@@ -1,10 +1,11 @@
+import type { RangeParseCase } from './types'
 import { MAX_SAFE_INTEGER } from '../../src/internal/constants'
 
 // [range, canonical result, options]
 // null result means it's not a valid range
 // '*' is the return value from functions.validRange(), but
 // new Range().range will be '' in those cases
-export const rangeParse = [
+export const rangeParse: RangeParseCase[] = [
   ['1.0.0 - 2.0.0', '>=1.0.0 <=2.0.0'],
   ['1.0.0 - 2.0.0', '>=1.0.0-0 <2.0.1-0', { includePrerelease: true }],
   ['1 - 2', '>=1.0.0 <3.0.0-0'],

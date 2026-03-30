@@ -13,8 +13,5 @@
     "verbatimModuleSyntax": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
-  },
-  "include": [
-    "src/**/*.ts"
-  ]
+  }
 }

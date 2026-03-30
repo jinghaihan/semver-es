@@ -1,5 +1,7 @@
+import type { RangeIntersectionCase } from './types'
+
 // r0, r1, expected intersection
-export const rangeIntersection = [
+export const rangeIntersection: RangeIntersectionCase[] = [
   ['1.3.0 || <1.0.0 >2.0.0', '1.3.0 || <1.0.0 >2.0.0', true],
   ['<1.0.0 >2.0.0', '>0.0.0', false],
   ['>0.0.0', '<1.0.0 >2.0.0', false],

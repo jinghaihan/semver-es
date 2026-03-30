@@ -1,5 +1,7 @@
+import type { ComparatorIntersectionCase } from './types'
+
 // c0, c1, expected intersection, includePrerelease
-export const comparatorIntersection = [
+export const comparatorIntersection: ComparatorIntersectionCase[] = [
   // One is a Version
   ['1.3.0', '>=1.3.0', true],
   ['1.3.0', '>1.3.0', false],

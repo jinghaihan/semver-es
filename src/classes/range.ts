@@ -1,6 +1,5 @@
 import type {
   ComparatorSet,
-  OptionsOrLoose,
   ParsedOptions,
   RangeLike,
   RangeOptionsOrLoose,
@@ -37,7 +36,7 @@ export class Range {
   public set: RangeSet = []
   public formatted: string | undefined
 
-  constructor(range: RangeLike, optionsOrLoose?: RangeOptionsOrLoose)
+  constructor(range: RangeLike | Comparator, optionsOrLoose?: RangeOptionsOrLoose)
   constructor(range?: RangeLike | Comparator, optionsOrLoose?: RangeOptionsOrLoose) {
     const parsedOptions = parseOptions(optionsOrLoose)
 
@@ -206,8 +205,8 @@ export class Range {
     return result
   }
 
-  intersects(range: Range, optionsOrLoose?: OptionsOrLoose): boolean
-  intersects(range?: RangeLike, optionsOrLoose?: OptionsOrLoose): boolean {
+  intersects(range: Range, optionsOrLoose?: RangeOptionsOrLoose): boolean
+  intersects(range?: RangeLike, optionsOrLoose?: RangeOptionsOrLoose): boolean {
     if (!(range instanceof Range))
       throw new TypeError('a Range is required')
 
@@ -261,7 +260,7 @@ export class Range {
 
 // take a set of comparators and determine whether there
 // exists a version which can satisfy it
-function isSatisfiable(comparators: ComparatorSet, options?: OptionsOrLoose): boolean {
+function isSatisfiable(comparators: ComparatorSet, options?: RangeOptionsOrLoose): boolean {
   let result = true
   const remainingComparators = comparators.slice()
   let testComparator = remainingComparators.pop()

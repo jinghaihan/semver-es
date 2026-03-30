@@ -1,8 +1,8 @@
 import type {
   ComparatorLike,
   ComparatorOperator,
-  OptionsOrLoose,
   ParsedOptions,
+  RangeOptionsOrLoose,
   SemVerLike,
 } from '../types'
 import { cmp } from '../functions/cmp'
@@ -22,11 +22,11 @@ export class Comparator {
   public semver: SemVer | typeof ANY = ANY
   public value: string = ''
 
-  static get ANY() {
+  static get ANY(): typeof ANY {
     return ANY
   }
 
-  constructor(comp: ComparatorLike, options?: OptionsOrLoose) {
+  constructor(comp: ComparatorLike, options?: RangeOptionsOrLoose) {
     const parsedOptions = parseOptions(options)
 
     if (comp instanceof Comparator) {
@@ -74,7 +74,6 @@ export class Comparator {
     return this.value
   }
 
-  test(version: SemVerLike): boolean
   test(version: SemVerLike | typeof ANY): boolean {
     debug('Comparator.test', version, this.options.loose)
 
@@ -93,8 +92,8 @@ export class Comparator {
     return cmp(version, this.operator, this.semver, this.options)
   }
 
-  intersects(comp: Comparator, optionsOrLoose?: OptionsOrLoose): boolean
-  intersects(comp?: Comparator, optionsOrLoose?: OptionsOrLoose): boolean {
+  intersects(comp: Comparator, optionsOrLoose?: RangeOptionsOrLoose): boolean
+  intersects(comp?: Comparator, optionsOrLoose?: RangeOptionsOrLoose): boolean {
     if (!(comp instanceof Comparator))
       throw new TypeError('a Comparator is required')
 

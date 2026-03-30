@@ -59,7 +59,11 @@ test('toString equals parsed version', (t) => {
 test('throws when presented with garbage', (t) => {
   t.plan(invalidVersions.length)
   invalidVersions.forEach(([v, msg, opts]) =>
-    t.throws(() => new SemVer(v, opts), msg))
+    t.throws(() => {
+      // @ts-expect-error invalidVersions intentionally contains non-SemVer inputs.
+      // eslint-disable-next-line no-new
+      new SemVer(v, opts)
+    }, msg))
 })
 
 test('return SemVer arg to ctor if options match', (t) => {
@@ -76,9 +80,10 @@ test('really big numeric prerelease value', (t) => {
 })
 
 test('invalid version numbers', (t) => {
-  ['1.2.3.4', 'NOT VALID', 1.2, null, 'Infinity.NaN.Infinity'].forEach((v) => {
+  ;(['1.2.3.4', 'NOT VALID', 1.2, null, 'Infinity.NaN.Infinity'] as const).forEach((v) => {
     t.throws(
       () => {
+        // @ts-expect-error exercising invalid constructor input handling.
         new SemVer(v) // eslint-disable-line no-new
       },
       {
@@ -106,10 +111,14 @@ test('incrementing', (t) => {
   ]) => t.test(`${version} ${inc} ${id || ''}`.trim(), (t) => {
     if (expect === null) {
       t.plan(1)
-      t.throws(() => new SemVer(version, options).inc(inc, id, base))
+      t.throws(() => {
+        // @ts-expect-error increments fixture intentionally includes invalid versions/releases/identifiers.
+        new SemVer(version, options).inc(inc, id, base)
+      })
     }
     else {
       t.plan(2)
+      // @ts-expect-error increments fixture intentionally includes legacy/invalid argument combinations.
       const incremented = new SemVer(version, options).inc(inc, id, base)
       t.equal(incremented.version, expect)
       if (incremented.build.length) {

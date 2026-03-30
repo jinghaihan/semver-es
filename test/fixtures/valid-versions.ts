@@ -1,5 +1,7 @@
+import type { ValidVersionCase } from './types'
+
 // [version, major, minor, patch, prerelease[], build[]]
-export const validVersions = [
+export const validVersions: ValidVersionCase[] = [
   ['1.0.0', 1, 0, 0, [], []],
   ['2.1.0', 2, 1, 0, [], []],
   ['3.2.1', 3, 2, 1, [], []],

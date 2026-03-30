@@ -1,6 +1,8 @@
+import type { VersionRangeCase } from './types'
+
 // [range, version, options]
 // Version should NOT be greater than range
-export const versionNotGtr = [
+export const versionNotGtr: VersionRangeCase[] = [
   ['~0.6.1-1', '0.6.1-1'],
   ['1.0.0 - 2.0.0', '1.2.3'],
   ['1.0.0 - 2.0.0', '0.9.9'],

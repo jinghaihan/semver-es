@@ -3,7 +3,7 @@ import { test } from '../tap'
 
 test('minimum version in range tests', (t) => {
   // [range, minimum, loose]
-  [
+  const cases: Array<[string, string | null, boolean?]> = [
     // Stars
     ['*', '0.0.0'],
     ['* || >=2', '0.0.0'],
@@ -64,10 +64,11 @@ test('minimum version in range tests', (t) => {
 
     // Impossible range
     ['>4 <3', null],
-  ].forEach((tuple) => {
+  ]
+  cases.forEach((tuple) => {
     const range = tuple[0]
     const version = tuple[1]
-    const loose = tuple[2] || false
+    const loose = tuple[2] ?? false
     const msg = `minVersion(${range}, ${loose}) = ${version}`
     const min = minVersion(range, loose)
     t.ok(min === version || (min && min.version === version), msg, {

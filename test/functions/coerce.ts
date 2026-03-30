@@ -5,7 +5,7 @@ import { test } from '../tap'
 
 test('coerce tests', (t) => {
   // Expected to be null (cannot be coerced).
-  const coerceToNull = [
+  const coerceToNull: unknown[] = [
     null,
     { version: '1.2.3' },
     function () {
@@ -27,11 +27,12 @@ test('coerce tests', (t) => {
   ]
   coerceToNull.forEach((input) => {
     const msg = `coerce(${input}) should be null`
+    // @ts-expect-error exercising non-public invalid inputs that upstream treats as null.
     t.same(coerce(input), null, msg)
   })
 
   // Expected to be valid.
-  const coerceToValid = [
+  const coerceToValid: Array<[number | string | ReturnType<typeof parse>, string, { rtl?: boolean, includePrerelease?: boolean }?]> = [
     [parse('1.2.3'), '1.2.3'],
     ['.1', '1.0.0'],
     ['.1.', '1.0.0'],
@@ -144,9 +145,9 @@ test('coerce tests', (t) => {
   ]
   coerceToValid.forEach(([input, expected, options]) => {
     const coerceExpression = `coerce(${input}, ${JSON.stringify(options)})`
-    const coercedVersion = coerce(input, options) || {}
+    const coercedVersion = coerce(input, options)
     const expectedVersion = parse(expected)
-    if (!expectedVersion) {
+    if (!expectedVersion || !coercedVersion) {
       throw new Error(`Expected a valid semver for ${expected}`)
     }
     t.equal(expectedVersion.compare(coercedVersion), 0, `${coerceExpression} should be equal to ${expectedVersion}`)

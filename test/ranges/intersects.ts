@@ -49,6 +49,7 @@ test('ranges intersect', (t) => {
 
 test('missing comparator parameter in intersect comparators', (t) => {
   t.throws(() => {
+    // @ts-expect-error verifying runtime error for missing required argument.
     new Comparator('>1.0.0').intersects()
   }, new TypeError('a Comparator is required'), 'throws type error')
   t.end()

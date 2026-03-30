@@ -1,6 +1,8 @@
+import type { RangeIncludeCase } from './types'
+
 // [range, version, options]
 // version should be included by range
-export const rangeInclude = [
+export const rangeInclude: RangeIncludeCase[] = [
   ['1.0.0 - 2.0.0', '1.2.3'],
   ['^1.2.3+build', '1.2.3'],
   ['^1.2.3+build', '1.3.0'],

@@ -4,7 +4,7 @@ import { test } from '../tap'
 test('minor tests', (t) => {
   // [range, version]
   // Version should be detectable despite extra characters
-  [
+  const cases: Array<[string, number, boolean?]> = [
     ['1.1.3', 1],
     [' 1.1.3 ', 1],
     [' 1.2.3-4 ', 2],
@@ -14,7 +14,8 @@ test('minor tests', (t) => {
     ['\t1.13.3', 13],
     ['=1.21.3', 21, true],
     ['v=1.34.3', 34, true],
-  ].forEach((tuple) => {
+  ]
+  cases.forEach((tuple) => {
     const range = tuple[0]
     const version = tuple[1]
     const loose = tuple[2] || false

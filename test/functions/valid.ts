@@ -7,7 +7,12 @@ import { tap as t } from '../tap'
 t.test('returns null instead of throwing when presented with garbage', (t) => {
   t.plan(invalidVersions.length)
   invalidVersions.forEach(([v, msg, opts]) =>
-    t.equal(valid(v, opts), null, msg))
+    t.equal(
+      // @ts-expect-error invalidVersions intentionally contains non-SemVer inputs.
+      valid(v, opts),
+      null,
+      msg,
+    ))
 })
 
 t.test('validate a version into a SemVer object', (t) => {

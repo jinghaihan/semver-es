@@ -1,6 +1,8 @@
+import type { RangeExcludeCase } from './types'
+
 // [range, version, options]
 // version should not be included by range
-export const rangeExclude = [
+export const rangeExclude: RangeExcludeCase[] = [
   ['1.0.0 - 2.0.0', '2.2.3'],
   ['1.2.3+asdf - 2.4.3+asdf', '1.2.3-pre.2'],
   ['1.2.3+asdf - 2.4.3+asdf', '2.4.3-alpha'],

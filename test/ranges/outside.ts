@@ -47,6 +47,7 @@ test('negative ltr tests', (t) => {
 
 test('outside with bad hilo throws', (t) => {
   t.throws(() => {
+    // @ts-expect-error verifying runtime throw for invalid hilo.
     outside('1.2.3', '>1.5.0', 'blerg', true)
   }, new TypeError('Must provide a hilo val of "<" or ">"'))
   t.end()

@@ -9,6 +9,7 @@ import { test } from '../tap'
 test('range tests', (t) => {
   t.plan(rangeInclude.length)
   rangeInclude.forEach(([range, ver, options]) => {
+    // @ts-expect-error upstream accepts loose legacy option shapes exercised by this fixture.
     const r = new Range(range, options)
     t.ok(r.test(ver), `${range} satisfied by ${ver}`)
   })
@@ -57,7 +58,9 @@ test('range as argument to range ctor', (t) => {
 test('negative range tests', (t) => {
   t.plan(rangeExclude.length)
   rangeExclude.forEach(([range, ver, options]) => {
+    // @ts-expect-error upstream accepts loose legacy option shapes exercised by this fixture.
     const r = new Range(range, options)
+    // @ts-expect-error this fixture includes intentionally invalid versions to assert false instead of throw.
     t.notOk(r.test(ver), `${range} not satisfied by ${ver}`)
   })
 })
@@ -103,6 +106,7 @@ test('ranges intersect', (t) => {
 
 test('missing range parameter in range intersect', (t) => {
   t.throws(() => {
+    // @ts-expect-error verifying runtime error for missing required argument.
     new Range('1.0.0').intersects()
   }, new TypeError('a Range is required'), 'throws type error')
   t.end()

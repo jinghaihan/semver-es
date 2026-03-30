@@ -4,7 +4,7 @@ import { test } from '../tap'
 test('clean tests', (t) => {
   // [range, version]
   // Version should be detectable despite extra characters
-  [
+  const cases: Array<[string, string | null]> = [
     ['1.2.3', '1.2.3'],
     [' 1.2.3 ', '1.2.3'],
     [' 1.2.3-4 ', '1.2.3-4'],
@@ -18,7 +18,8 @@ test('clean tests', (t) => {
     ['<=1.2.3', null],
     ['1.2.x', null],
     ['0.12.0-dev.1150+3c22cecee', '0.12.0-dev.1150'],
-  ].forEach(([range, version]) => {
+  ]
+  cases.forEach(([range, version]) => {
     const msg = `clean(${range}) = ${version}`
     t.equal(clean(range), version, msg)
   })
